@@ -54,31 +54,7 @@ func (g * Graph) HasNode(_name string) (bool, error) {
 }
 
 func (g * Graph) RemoveNode(_name string) error {
-	found, index, err := g.findNode(_name)
-	if err != nil {
-		return err
-	}
 	
-	dependencies, dependants, err := found.removeNode()
-	if err != nil {
-		return err
-	}
-
-	for _, dep := range dependencies {
-		foundDep, _ := g.nodeList[index].findNode(dep.name, &set{})
-		if foundDep == nil {
-			g.nodeList = append(g.nodeList, dep)
-		}
-	}
-
-	for _, dep := range dependants {
-		foundDep, _ := g.nodeList[index].findNode(dep.name, &set{})
-		if foundDep == nil {
-			g.nodeList = append(g.nodeList, dep)
-		}
-	}
-
-	g.size--
 	return nil
 }
 
