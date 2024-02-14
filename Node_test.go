@@ -24,13 +24,7 @@ func TestNodeOperations(t *testing.T) {
         t.Errorf("addDependant or directDependantsOf failed: expected dependants not present")
     }
 
-    node1dependencies, node1dependants, err := node1.removeNode()
-    if err != nil {
-        t.Errorf("removeNode failed: %v", err)
-    }
-    if len(node1dependencies) != 2 || len(node1dependants) != 0 {
-        t.Errorf("removeNode failed: dependencies or dependants not correctly returned")
-    }
+    node1.removeNode()
 	node2dependants = node2.directDependantsOf()
 	node3dependants = node3.directDependantsOf()
 	if node2dependants.contains(node1) || node3dependants.contains(node1) {

@@ -30,7 +30,7 @@ func (n *node) addDependant(d *node) {
 	n.dependants = append(n.dependants, d)
 }
 
-func (n *node) removeNode() ([]*node, []*node, error) {
+func (n *node) removeNode() {
 	for _, dep := range n.dependants {
 		dep.dependencies = deleteByValue(dep.dependencies, n)
 	}
@@ -38,8 +38,6 @@ func (n *node) removeNode() ([]*node, []*node, error) {
 	for _, dep := range n.dependencies {
 		dep.dependants = deleteByValue(dep.dependants, n)
 	}
-
-	return n.dependencies, n.dependants, nil
 }
 
 func (n *node) dependenciesOf(checkedNodes *set) set {
