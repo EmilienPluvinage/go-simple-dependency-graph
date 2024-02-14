@@ -47,7 +47,7 @@ func TestNodesToString(t *testing.T) {
     node3 := &node{name: "Node3"}
     nodes := []*node{node1, node2, node3}
 
-    result := nodesToString(nodes)
+    result := nodesTo[string](nodes)
     expected := []string{"Node1", "Node2", "Node3"}
     if !reflect.DeepEqual(result, expected) {
         t.Errorf("nodesToString failed: got %v, expected %v", result, expected)

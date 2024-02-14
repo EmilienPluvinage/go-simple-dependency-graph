@@ -2,24 +2,25 @@ package dependencyGraph
 
 import (
 	"errors"
+	"reflect"
 )
 
-type Graph struct {
+type Graph[T any] struct {
 	allowCircular bool
 	nodeList []*node
 	size int
 }
 
 
-func NewGraph(allowCircular bool) *Graph {
-	return &Graph{
+func NewGraph[T any](allowCircular bool) *Graph[T] {
+	return &Graph[T]{
 		allowCircular,
 		[]*node{},
 		0,
 	}
 }
 
-func (g * Graph) findNode(_name string) (*node, int, error) {
+func (g * Graph[T]) findNode(_name T) (*node, int, error) {
 	for index, value := range g.nodeList {
 		checkedNodes := &set{}
 		found, _ := value.findNode(_name, checkedNodes)
@@ -31,7 +32,7 @@ func (g * Graph) findNode(_name string) (*node, int, error) {
 	return nil, 0, errors.New("Unknown node")
 }
 
-func (g * Graph) AddNode(_name string) error {
+func (g * Graph[T]) AddNode(_name T) error {
 	hasNode, _ := g.HasNode(_name)
 	if hasNode {
 		return errors.New("Node already exists")
@@ -44,7 +45,7 @@ func (g * Graph) AddNode(_name string) error {
 	return nil
 }
 
-func (g * Graph) HasNode(_name string) (bool, error) {
+func (g * Graph[T]) HasNode(_name T) (bool, error) {
 	found, _, err := g.findNode(_name)
 	if err != nil {
 		return false, nil
@@ -53,7 +54,7 @@ func (g * Graph) HasNode(_name string) (bool, error) {
 	return found != nil, nil
 }
 
-func (g * Graph) RemoveNode(_name string) error {
+func (g * Graph[T]) RemoveNode(_name T) error {
 	found, index, err := g.findNode(_name)
 	if err != nil {
 		return err
@@ -82,30 +83,30 @@ func (g * Graph) RemoveNode(_name string) error {
 	return nil
 }
 
-func (g * Graph) Size() (int, error) {
+func (g * Graph[T]) Size() (int, error) {
 	return g.size, nil
 }
 
-func (g * Graph) EntryNodes() ([]string, error) {
+func (g * Graph[T]) EntryNodes() ([]T, error) {
 	entryNodes := &set{}
 	for _, value := range g.nodeList {
 		checkedNodes := &set{}
 		value.entryNodes(checkedNodes, entryNodes)
 	}
-	return nodesToString(entryNodes.toSlice()), nil
+	return nodesTo[T](entryNodes.toSlice()), nil
 }
 
-func (g * Graph) DependenciesOf(_name string) ([]string, error) {
+func (g * Graph[T]) DependenciesOf(_name T) ([]T, error) {
 	found, _, err := g.findNode(_name)
 	if err != nil {
 		return nil, err
 	}
 	
 	dependencies := found.dependenciesOf(&set{})
-	return nodesToString(dependencies.toSlice()), nil
+	return nodesTo[T](dependencies.toSlice()), nil
 }
 
-func (g * Graph) DependantsOf(_name string) ([]string, error) {
+func (g * Graph[T]) DependantsOf(_name T) ([]T, error) {
 	found, _, err := g.findNode(_name)
 	if err != nil {
 		return nil, err
@@ -113,34 +114,34 @@ func (g * Graph) DependantsOf(_name string) ([]string, error) {
 	
 
 	dependants := found.dependantsOf(&set{})
-	return nodesToString(dependants.toSlice()), nil
+	return nodesTo[T](dependants.toSlice()), nil
 }
 
-func (g * Graph) DirectDependenciesOf(_name string) ([]string, error) {
+func (g * Graph[T]) DirectDependenciesOf(_name T) ([]T, error) {
 	found, _, err := g.findNode(_name)
 	if err != nil {
-		return []string{}, err
+		return []T{}, err
 	}
-	result := make([]string, 0, len(found.dependencies)-1)
+	result := make([]T, 0, len(found.dependencies)-1)
 	for index, dep := range found.dependencies {
-		result[index] = dep.name
+		result[index] = dep.name.(T)
 	}
 	return result, nil
 }
 
-func (g * Graph) DirectDependantsOf(_name string) ([]string, error) {
+func (g * Graph[T]) DirectDependantsOf(_name T) ([]T, error) {
 	found, _, err := g.findNode(_name)
 	if err != nil {
-		return []string{}, err
+		return []T{}, err
 	}
-	result := make([]string, 0, len(found.dependants)-1)
+	result := make([]T, 0, len(found.dependants)-1)
 	for index, dep := range found.dependants {
-		result[index] = dep.name
+		result[index] = dep.name.(T)
 	}
 	return result, nil
 }
 
-func (g * Graph) RemoveDependency(from string, to string) error {
+func (g * Graph[T]) RemoveDependency(from T, to T) error {
 	fromNode, index, err := g.findNode(from)
 	if err != nil {
 		return err
@@ -148,7 +149,7 @@ func (g * Graph) RemoveDependency(from string, to string) error {
 
 	var toNode *node
 	for _, value := range fromNode.dependencies {
-		if value.name == to {
+		if reflect.DeepEqual(value.name.(T), to) {
 			toNode = value
 			break
 		}
@@ -188,8 +189,8 @@ func (g * Graph) RemoveDependency(from string, to string) error {
 	return nil
 }
 
-func (g * Graph) AddDependency(from string, to string) error {
-	if from == to {
+func (g * Graph[T]) AddDependency(from T, to T) error {
+	if reflect.DeepEqual(from, to) {
 		return errors.New("Circular dependency")
 	}
 

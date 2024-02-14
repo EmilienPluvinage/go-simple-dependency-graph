@@ -1,12 +1,12 @@
 package dependencyGraph
 
 type node struct {
-	name         string
+	name         interface{}
 	dependencies []*node
 	dependants   []*node
 }
 
-func newNode(_name string) *node {
+func newNode(_name interface{}) *node {
 	return &node{
 		name:         _name,
 		dependencies: []*node{},
@@ -87,7 +87,7 @@ func (n *node) entryNodes(checkedNodes *set, entryNodes *set) {
 	}
 }
 
-func (n *node) findNode(_name string, checkedNodes *set) (*node, error) {
+func (n *node) findNode(_name interface{}, checkedNodes *set) (*node, error) {
 
 	if n.name == _name {
 		return n, nil

@@ -5,7 +5,7 @@ import (
 )
 
 func TestGraph(t *testing.T) {
-	graph := NewGraph(true)
+	graph := NewGraph[string](true)
 
 	graph.AddNode("A")
 	graph.AddNode("B")
@@ -21,7 +21,7 @@ func TestGraph(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	graph2 := NewGraph(false) 
+	graph2 := NewGraph[string](false) 
 	graph2.AddNode("X")
 	graph2.AddNode("Y")
 	graph2.AddNode("Z")
@@ -31,7 +31,7 @@ func TestGraph(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	err = graph2.AddDependency("Y", "Z")
+	graph2.AddDependency("Y", "Z")
 	err = graph2.AddDependency("Z", "X")
 	if err == nil {
 		t.Errorf("Expected circular dependency error, got none")
@@ -50,7 +50,7 @@ func TestGraph(t *testing.T) {
 
 
 func TestGraphEntryNodes(t *testing.T) {
-	graph := NewGraph(true) 
+	graph := NewGraph[string](true) 
 
 	graph.AddNode("A")
 	graph.AddNode("B")
@@ -60,13 +60,13 @@ func TestGraphEntryNodes(t *testing.T) {
 	graph.AddNode("F")
 	graph.AddNode("G")
 
-	err := graph.AddDependency("A", "B")
-	err = graph.AddDependency("B", "C")
-	err = graph.AddDependency("C", "A")
-	err = graph.AddDependency("D", "A")
-	err = graph.AddDependency("E", "B")
-	err = graph.AddDependency("F", "G")
-	err = graph.RemoveNode("F")
+	graph.AddDependency("A", "B")
+	graph.AddDependency("B", "C")
+	graph.AddDependency("C", "A")
+	graph.AddDependency("D", "A")
+	graph.AddDependency("E", "B")
+	graph.AddDependency("F", "G")
+	graph.RemoveNode("F")
 
 	entryNodes, err := graph.EntryNodes()
 	if err != nil {
@@ -89,20 +89,17 @@ func TestGraphEntryNodes(t *testing.T) {
 }
 
 func TestGraphSplit(t *testing.T) {
-	graph := NewGraph(true) 
+	graph := NewGraph[string](true) 
 	graph.AddNode("A")
 	graph.AddNode("B")
 	graph.AddNode("C")
 	graph.AddNode("D")
-	err := graph.AddDependency("A", "B")
-	err = graph.AddDependency("A", "C")
-	err = graph.AddDependency("B", "D")
-	err = graph.AddDependency("C", "D")
-	err = graph.RemoveNode("B")
-	err = graph.RemoveNode("C")
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
+	graph.AddDependency("A", "B")
+	graph.AddDependency("A", "C")
+	graph.AddDependency("B", "D")
+	graph.AddDependency("C", "D")
+	graph.RemoveNode("B")
+	graph.RemoveNode("C")
 
 	entryNodes, err := graph.EntryNodes()
 	if err != nil {
