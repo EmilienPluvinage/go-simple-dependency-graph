@@ -5,7 +5,7 @@ import (
 )
 
 func TestGraph(t *testing.T) {
-	graph := NewGraph(true)
+	graph := NewGraph[string](true)
 
 	graph.AddNode("A")
 	graph.AddNode("B")
@@ -21,7 +21,7 @@ func TestGraph(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	graph2 := NewGraph(false) 
+	graph2 := NewGraph[string](false) 
 	graph2.AddNode("X")
 	graph2.AddNode("Y")
 	graph2.AddNode("Z")
@@ -50,7 +50,7 @@ func TestGraph(t *testing.T) {
 
 
 func TestGraphEntryNodes(t *testing.T) {
-	graph := NewGraph(true) 
+	graph := NewGraph[string](true) 
 
 	graph.AddNode("A")
 	graph.AddNode("B")
@@ -89,7 +89,7 @@ func TestGraphEntryNodes(t *testing.T) {
 }
 
 func TestGraphSplit(t *testing.T) {
-	graph := NewGraph(true) 
+	graph := NewGraph[string](true) 
 	graph.AddNode("A")
 	graph.AddNode("B")
 	graph.AddNode("C")
