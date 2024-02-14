@@ -5,152 +5,112 @@ import (
 	"reflect"
 )
 
-type Graph[T any] struct {
+type Graph[T comparable] struct {
 	allowCircular bool
-	nodeList []*node
-	size int
+	nodeList map[T]*node
 }
 
 
-func NewGraph[T any](allowCircular bool) *Graph[T] {
+func NewGraph[T comparable](allowCircular bool) *Graph[T] {
 	return &Graph[T]{
 		allowCircular,
-		[]*node{},
-		0,
+		make(map[T]*node),
 	}
-}
-
-func (g * Graph[T]) findNode(_name T) (*node, int, error) {
-	for index, value := range g.nodeList {
-		checkedNodes := &set{}
-		found, _ := value.findNode(_name, checkedNodes)
-		if found != nil {
-			return found, index, nil
-		}
-	}
-
-	return nil, 0, errors.New("Unknown node")
 }
 
 func (g * Graph[T]) AddNode(_name T) error {
-	hasNode, _ := g.HasNode(_name)
-	if hasNode {
+	if g.HasNode(_name) {
 		return errors.New("Node already exists")
 	}
 
 	nodeToAdd := newNode(_name)
-
-	g.size++
-	g.nodeList = append(g.nodeList, nodeToAdd)
+	g.nodeList[_name] = nodeToAdd
 	return nil
 }
 
-func (g * Graph[T]) HasNode(_name T) (bool, error) {
-	found, _, err := g.findNode(_name)
-	if err != nil {
-		return false, nil
-	}
-	
-	return found != nil, nil
+func (g * Graph[T]) HasNode(_name T) bool {
+	return g.nodeList[_name] != nil
 }
 
 func (g * Graph[T]) RemoveNode(_name T) error {
-	found, index, err := g.findNode(_name)
-	if err != nil {
-		return err
+	nodeToRemove := g.nodeList[_name]
+	if nodeToRemove == nil {
+		return errors.New("Node doesn't exist")
 	}
 	
-	dependencies, dependants, err := found.removeNode()
-	if err != nil {
-		return err
-	}
-
-	for _, dep := range dependencies {
-		foundDep, _ := g.nodeList[index].findNode(dep.name, &set{})
-		if foundDep == nil {
-			g.nodeList = append(g.nodeList, dep)
-		}
-	}
-
-	for _, dep := range dependants {
-		foundDep, _ := g.nodeList[index].findNode(dep.name, &set{})
-		if foundDep == nil {
-			g.nodeList = append(g.nodeList, dep)
-		}
-	}
-
-	g.size--
+	nodeToRemove.removeNode()
+	delete(g.nodeList, _name)
 	return nil
 }
 
-func (g * Graph[T]) Size() (int, error) {
-	return g.size, nil
+func (g * Graph[T]) Size() int {
+	return len(g.nodeList)
 }
 
-func (g * Graph[T]) EntryNodes() ([]T, error) {
-	entryNodes := &set{}
-	for _, value := range g.nodeList {
-		checkedNodes := &set{}
-		value.entryNodes(checkedNodes, entryNodes)
+func (g * Graph[T]) EntryNodes() []T {
+	entryNodes := []T{}
+	for key, value := range g.nodeList {
+		if value.isEntryNode() {
+			entryNodes = append(entryNodes, key)
+		}
 	}
-	return nodesTo[T](entryNodes.toSlice()), nil
+	return entryNodes
 }
 
 func (g * Graph[T]) DependenciesOf(_name T) ([]T, error) {
-	found, _, err := g.findNode(_name)
-	if err != nil {
-		return nil, err
+	selectedNode := g.nodeList[_name]
+	if selectedNode == nil {
+		return []T{}, errors.New("Node doesn't exist")
 	}
 	
-	dependencies := found.dependenciesOf(&set{})
+	dependencies := selectedNode.dependenciesOf(&set{})
 	return nodesTo[T](dependencies.toSlice()), nil
 }
 
 func (g * Graph[T]) DependantsOf(_name T) ([]T, error) {
-	found, _, err := g.findNode(_name)
-	if err != nil {
-		return nil, err
+	selectedNode := g.nodeList[_name]
+	if selectedNode == nil {
+		return []T{}, errors.New("Node doesn't exist")
 	}
 	
-
-	dependants := found.dependantsOf(&set{})
+	dependants := selectedNode.dependantsOf(&set{})
 	return nodesTo[T](dependants.toSlice()), nil
 }
 
 func (g * Graph[T]) DirectDependenciesOf(_name T) ([]T, error) {
-	found, _, err := g.findNode(_name)
-	if err != nil {
-		return []T{}, err
+	selectedNode := g.nodeList[_name]
+	if selectedNode == nil {
+		return []T{}, errors.New("Node doesn't exist")
 	}
-	result := make([]T, 0, len(found.dependencies)-1)
-	for index, dep := range found.dependencies {
-		result[index] = dep.name.(T)
+	dependencies := make([]T, 0, len(selectedNode.dependencies))
+	for key := range selectedNode.dependencies {
+		dependencies = append(dependencies, key.name.(T))
 	}
-	return result, nil
+	return dependencies, nil
 }
 
 func (g * Graph[T]) DirectDependantsOf(_name T) ([]T, error) {
-	found, _, err := g.findNode(_name)
-	if err != nil {
-		return []T{}, err
+	selectedNode := g.nodeList[_name]
+	if selectedNode == nil {
+		return []T{}, errors.New("Node doesn't exist")
 	}
-	result := make([]T, 0, len(found.dependants)-1)
-	for index, dep := range found.dependants {
-		result[index] = dep.name.(T)
+	dependants := make([]T, 0, len(selectedNode.dependants))
+	for key := range selectedNode.dependants {
+		dependants = append(dependants, key.name.(T))
 	}
-	return result, nil
+	return dependants, nil
 }
 
 func (g * Graph[T]) RemoveDependency(from T, to T) error {
-	fromNode, index, err := g.findNode(from)
-	if err != nil {
-		return err
+	fromNode := g.nodeList[from]
+	if fromNode == nil {
+		return errors.New("Node doesn't exist")
 	}
 
 	var toNode *node
-	for _, value := range fromNode.dependencies {
-		if reflect.DeepEqual(value.name.(T), to) {
-			toNode = value
+	for key := range fromNode.dependencies {
+		if reflect.DeepEqual(key.name.(T), to) {
+			toNode = key
 			break
 		}
 	}
@@ -159,32 +119,8 @@ func (g * Graph[T]) RemoveDependency(from T, to T) error {
 		return errors.New("Unknown dependency")
 	}
 	
-	fromNode.dependencies = deleteByValue(fromNode.dependencies, toNode)
-	toNode.dependants = deleteByValue(toNode.dependants, fromNode)
-
-	rootNode := g.nodeList[index]
-
-	AllDependencies := rootNode.dependenciesOf(&set{})
-	AllDependants := rootNode.dependantsOf(&set{})
-	AllDependants.concat(AllDependencies)
-	var foundFrom, foundTo bool
-
-	for key := range AllDependants {
-		if key == fromNode {
-			foundFrom = true
-		}
-		if key == toNode {
-			foundTo = true
-		}
-	}
-
-	if !foundFrom {
-		g.nodeList = append(g.nodeList, fromNode)
-	}
-
-	if !foundTo {
-		g.nodeList = append(g.nodeList, toNode)
-	}
+	fromNode.dependencies.remove(toNode)
+	toNode.dependants.remove(fromNode)
 
 	return nil
 }
@@ -194,35 +130,31 @@ func (g * Graph[T]) AddDependency(from T, to T) error {
 		return errors.New("Circular dependency")
 	}
 
-	fromNode, fromIndex, err := g.findNode(from)
-	if err != nil {
-		return err
-	}
-	toNode, toIndex, err := g.findNode(to)
-	if err != nil {
-		return err
+	fromNode := g.nodeList[from]
+	if fromNode == nil {
+		return errors.New("Node doesn't exist")
 	}
 
-	if toIndex == fromIndex {
-		directDependencies := fromNode.directDependenciesOf()
-		if directDependencies.contains(toNode) {
-			return errors.New("Already a dependency")
+	toNode := g.nodeList[to]
+	if toNode == nil {
+		return errors.New("Node doesn't exist")
+	}
+
+
+	directDependencies := fromNode.dependencies
+	if directDependencies.contains(toNode) {
+		return errors.New("Already a dependency")
+	}
+
+	if !g.allowCircular {
+		allDependants := fromNode.dependantsOf(&set{})
+		if allDependants.contains(toNode) {
+			return errors.New("Circular dependency")
 		}
-
-		if !g.allowCircular {
-			allDependants := fromNode.dependantsOf(&set{})
-			if allDependants.contains(toNode) {
-				return errors.New("Circular dependency")
-			}
-		}
 	}
-
-	fromNode.addDependency(toNode)
-	toNode.addDependant(fromNode)
-
-	if toIndex != fromIndex {
-		g.nodeList = deleteByIndex(g.nodeList, toIndex)
-	}
+	
+	fromNode.dependencies.add(toNode)
+	toNode.dependants.add(fromNode)
 
 	return nil
 }

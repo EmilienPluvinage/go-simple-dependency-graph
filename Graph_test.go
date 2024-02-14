@@ -68,10 +68,7 @@ func TestGraphEntryNodes(t *testing.T) {
 	graph.AddDependency("F", "G")
 	graph.RemoveNode("F")
 
-	entryNodes, err := graph.EntryNodes()
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
+	entryNodes := graph.EntryNodes()
 
 	expectedEntryNodes := []string{"D", "E", "G"}
 	for _, node := range expectedEntryNodes {
@@ -101,10 +98,7 @@ func TestGraphSplit(t *testing.T) {
 	graph.RemoveNode("B")
 	graph.RemoveNode("C")
 
-	entryNodes, err := graph.EntryNodes()
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
+	entryNodes := graph.EntryNodes()
 
 	expectedEntryNodes := []string{"A", "D"}
 	for _, node := range expectedEntryNodes {

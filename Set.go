@@ -23,8 +23,8 @@ func (s *set) contains(elem *node) bool {
 	return exists
 }
 
-func (s *set) concat(n set) {
-	for key := range n {
+func (s *set) concat(n *set) {
+	for key := range *n {
 		s.add(key)
 	}
 }
