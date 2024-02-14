@@ -47,13 +47,14 @@ func (g * Graph[T]) Size() int {
 	return len(g.nodeList)
 }
 
-func (g * Graph[T]) EntryNodes() ([]T, error) {
-	entryNodes := &set{}
-	for _, value := range g.nodeList {
-		checkedNodes := &set{}
-		value.entryNodes(checkedNodes, entryNodes)
+func (g * Graph[T]) EntryNodes() []T {
+	entryNodes := []T{}
+	for key, value := range g.nodeList {
+		if value.isEntryNode() {
+			entryNodes = append(entryNodes, key)
+		}
 	}
-	return nodesTo[T](entryNodes.toSlice()), nil
+	return entryNodes
 }
 
 func (g * Graph[T]) DependenciesOf(_name T) ([]T, error) {
@@ -81,12 +82,11 @@ func (g * Graph[T]) DirectDependenciesOf(_name T) ([]T, error) {
 	if selectedNode == nil {
 		return []T{}, errors.New("Node doesn't exist")
 	}
-
-	result := make([]T, 0, len(selectedNode.dependencies)-1)
-	for index, dep := range selectedNode.dependencies {
-		result[index] = dep.name.(T)
+	dependencies := make([]T, 0, len(selectedNode.dependencies))
+	for key := range selectedNode.dependencies {
+		dependencies = append(dependencies, key.name.(T))
 	}
-	return result, nil
+	return dependencies, nil
 }
 
 func (g * Graph[T]) DirectDependantsOf(_name T) ([]T, error) {
@@ -94,12 +94,11 @@ func (g * Graph[T]) DirectDependantsOf(_name T) ([]T, error) {
 	if selectedNode == nil {
 		return []T{}, errors.New("Node doesn't exist")
 	}
-
-	result := make([]T, 0, len(selectedNode.dependants)-1)
-	for index, dep := range selectedNode.dependants {
-		result[index] = dep.name.(T)
+	dependants := make([]T, 0, len(selectedNode.dependants))
+	for key := range selectedNode.dependants {
+		dependants = append(dependants, key.name.(T))
 	}
-	return result, nil
+	return dependants, nil
 }
 
 func (g * Graph[T]) RemoveDependency(from T, to T) error {
@@ -109,9 +108,9 @@ func (g * Graph[T]) RemoveDependency(from T, to T) error {
 	}
 
 	var toNode *node
-	for _, value := range fromNode.dependencies {
-		if reflect.DeepEqual(value.name.(T), to) {
-			toNode = value
+	for key := range fromNode.dependencies {
+		if reflect.DeepEqual(key.name.(T), to) {
+			toNode = key
 			break
 		}
 	}
@@ -120,8 +119,8 @@ func (g * Graph[T]) RemoveDependency(from T, to T) error {
 		return errors.New("Unknown dependency")
 	}
 	
-	fromNode.dependencies = deleteByValue(fromNode.dependencies, toNode)
-	toNode.dependants = deleteByValue(toNode.dependants, fromNode)
+	fromNode.dependencies.remove(toNode)
+	toNode.dependants.remove(fromNode)
 
 	return nil
 }
@@ -142,7 +141,7 @@ func (g * Graph[T]) AddDependency(from T, to T) error {
 	}
 
 
-	directDependencies := fromNode.directDependenciesOf()
+	directDependencies := fromNode.dependencies
 	if directDependencies.contains(toNode) {
 		return errors.New("Already a dependency")
 	}
@@ -154,8 +153,8 @@ func (g * Graph[T]) AddDependency(from T, to T) error {
 		}
 	}
 	
-	fromNode.addDependency(toNode)
-	toNode.addDependant(fromNode)
+	fromNode.dependencies.add(toNode)
+	toNode.dependants.add(fromNode)
 
 	return nil
 }
