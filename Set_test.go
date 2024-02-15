@@ -32,7 +32,7 @@ func TestSetOperations(t *testing.T) {
     }
 
     s2 := newSet(node2, node3)
-    s.concat(s2)
+    s.concat(&s2)
     if !s.contains(node2) || !s.contains(node3) {
         t.Errorf("concat failed: expected nodes not present in set after concatenation")
     }

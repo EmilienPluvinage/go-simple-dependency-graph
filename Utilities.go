@@ -33,10 +33,10 @@ func deleteByIndex(arr []*node, index int) []*node {
 	return result
 }
 
-func nodesToString(nodes []*node) []string {
-	result := make([]string, len(nodes))
-	for index, dep := range nodes {
-		result[index] = dep.name
+func nodesTo[T any](nodes []*node) []T {
+	result := make([]T, len(nodes))
+	for i, n := range nodes {
+		result[i] = n.name.(T)
 	}
 	return result
 }
