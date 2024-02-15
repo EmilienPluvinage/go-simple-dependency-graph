@@ -22,29 +22,16 @@ To be completed
 
 ## Example
 ```
-graph := NewGraph(true) 
+graph := NewGraph[string](true)
 
 graph.AddNode("A")
 graph.AddNode("B")
 graph.AddNode("C")
-graph.AddNode("D")
-graph.AddNode("E")
-graph.AddNode("F")
-graph.AddNode("G")
 
 graph.AddDependency("A", "B")
-graph.AddDependency("B", "C")
-graph.AddDependency("C", "A")
-graph.AddDependency("D", "A")
-graph.AddDependency("E", "B")
-graph.AddDependency("F", "G")
-graph.RemoveNode("F")
+graph.RemoveNode("C")
 
-entryNodes, err := graph.EntryNodes()
+entryNodes := graph.EntryNodes() // ["A"]
 
-dependenciesOfA, err := graph.DependenciesOf("A")
+dependenciesOfA, err := graph.DependenciesOf("A") // "B"
 ```
-
-## Future developments
-- Generic node types (instead of just strings)
-- Concurrency to make it faster
